@@ -1,47 +1,58 @@
-#Initialize default properties
-$p = $person | ConvertFrom-Json;
-$success = $False;
-$auditMessage = "for person " + $p.DisplayName;
- 
-#Specify DC
-$DC = "<DC FQDN>"
- 
-#Get AD Account
-$account = Get-ADUser -Filter ('employeeID -eq "' + $p.externalId + '"') -Server $DC;
- 
-#Fine-Grain Password Group
-$group = "<Password Policy Group Name>";
- 
-try {
- 
-    if(-Not($dryRun -eq $True)) {
-        Remove-ADGroupMember -Identity $group -Members $account -Server $DC -Confirm:$false;    
-        $response = $true;
+#region Initialize default properties
+$config = ConvertFrom-Json $configuration
+$p = $person | ConvertFrom-Json
+$pp = $previousPerson | ConvertFrom-Json
+$pd = $personDifferences | ConvertFrom-Json
+$m = $manager | ConvertFrom-Json
+$aRef = $accountReference | ConvertFrom-Json;
+
+$success = $False
+$auditLogs = New-Object Collections.Generic.List[PSCustomObject];
+
+$pdc = (Get-ADForest | Select-Object -ExpandProperty RootDomain | Get-ADDomain | Select-Object -Property PDCEmulator).PDCEmulator
+#endregion Initialize default properties
+
+#region Change mapping here
+    #Password Config
+    $poiicyGroup = "<POLICY GROUP NAME>";
+#endregion Change mapping here
+
+#region Execute
+    #Get AD Account
+    $previousAccount = Get-ADUser -Identity $aRef -Server $pdc
+    
+    try {
+        if(-Not($dryRun -eq $True)) {
+            Remove-ADGroupMember -Identity $policyGroup -Members $previousAccount -Server $pdc -Confirm:$false;
+            Write-Information "Removed $($policyGroup) group to $($previousAccount.sAMAccountName)";
+
+            $auditLogs.Add([PSCustomObject]@{
+                Action = "UpdateAccount"
+                Message = "Removed $($previousAccount.sAMAccountName) to password policy group $($policyGroup)";
+                IsError = $false;
+            });
+        } else { Write-Information "Password Policy $($policyGroup) would be removed" }
+
+        $success = $True; 
     }
-    else
+    catch
     {
-        $response = $true;
+        $auditLogs.Add([PSCustomObject]@{
+                        Action = "UpdateAccount"
+                        Message = "Failed to remove $($account.sAMAccountName) to password policy group $($policyGroup): $($_)";
+                        IsError = $true;
+                    });
+        Write-Error $_;
     }
-     
-    if($response -eq $true)
-    {
-        $success = $True;
-        $auditMessage = "Removed " + $p.DisplayName + " to password policy group " + $group;
-    }
-     
-}
-catch
-{
-        $auditMessage = $_.toString() + " : General error"
-}
+#endregion Execute
  
-#build up result
+#region build up result
 $result = [PSCustomObject]@{
     Success= $success;
-    AccountReference= $account_guid;
-    AuditDetails=$auditMessage;
-    Account = $account;
+    AuditLogs = $auditLogs
+    PreviousAccount = $previousAccount
+    Account = [PSCustomObject]@{}
 };
- 
-#send result back
+
 Write-Output $result | ConvertTo-Json -Depth 10
+#endregion build up result
