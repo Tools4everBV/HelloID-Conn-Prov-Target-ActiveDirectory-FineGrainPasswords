@@ -14,7 +14,7 @@ $pdc = (Get-ADForest | Select-Object -ExpandProperty RootDomain | Get-ADDomain |
 
 #region Change mapping here
     #Password Config
-    $poiicyGroup = "<POLICY GROUP NAME>";
+    $policyGroup = "<POLICY GROUP NAME>";
 #endregion Change mapping here
 
 #region Execute
