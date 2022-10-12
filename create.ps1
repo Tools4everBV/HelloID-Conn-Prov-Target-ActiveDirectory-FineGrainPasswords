@@ -18,7 +18,7 @@ $pdc = (Get-ADForest | Select-Object -ExpandProperty RootDomain | Get-ADDomain |
     $correlationAccountField = $config.correlationAccountField
 
     #Password Config
-    $poiicyGroup = "<POLICY GROUP NAME>";
+    $policyGroup = "<POLICY GROUP NAME>";
     $length = 16
     $nonAlphaChars = 5
     $defaultPassword = [System.Web.Security.Membership]::GeneratePassword($length, $nonAlphaChars)
