@@ -1,7 +1,8 @@
 # HelloID-Conn-Prov-Target-ActiveDirectory-FineGrainPasswords
 <p align="center">
-  <img src="Assets/ActiveDirectoryLogo.png">
+  <img src="https://www.tools4ever.nl/connector-logos/activedirectory-logo.png">
 </p>
+<br />
 Apply Fine Grain Password Policy to AD User
 
 ## Table of Contents
